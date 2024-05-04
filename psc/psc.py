@@ -95,8 +95,6 @@ class PSC:
         
         idx = c - 0x20
         cpos = (idx // 16, idx % 16)
-        print(cpos)
-        print(self.charmap)
         for i in range(self.pixheighttarget):
             for j in range(self.pixwidthtarget):
                 c = self.charmap[cpos[0] * self.pixheighttarget + i, 
