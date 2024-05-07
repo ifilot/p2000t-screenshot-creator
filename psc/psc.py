@@ -5,6 +5,7 @@ import os
 from PIL import Image
 import PIL.ImageFilter
 import PIL.ImageDraw
+import matplotlib.pyplot as plt
 
 WHITE = (255,255,255)
 BLACK = (0,0,0)
@@ -43,8 +44,11 @@ class PSC:
         Build class
         """
         # set class variables
-        self.pixheightsrc = 9
-        self.pixwidthsrc = 5
+        self.pixheightsrc1 = 9
+        self.pixwidthsrc1 = 5
+        
+        self.pixheightsrc2 = 10
+        self.pixwidthsrc2 = 6
         
         self.pixheighttarget = 20
         self.pixwidthtarget = 12
@@ -70,24 +74,35 @@ class PSC:
                 if line.startswith('-') or line.startswith('+'):
                     charlines.append(line.strip())
 
-            rows = 8
+            rows = 10
             cols = 16
             
             charmap = np.zeros((rows * self.pixheighttarget, cols * self.pixwidthtarget), dtype=np.uint8)
             
             for i in range(0,rows):
                 for j in range(0,cols):
-                    for k in range(0,self.pixheightsrc):
-                        for l in range(0,self.pixwidthsrc):
-                            c = charlines[(i * 16 + j) * self.pixheightsrc + k][l]
-                            for n in range(0,2):
-                                for o in range(0,2):
-                                    charmap[i * self.pixheighttarget + k*2 + 2 + n, 
-                                            j * self.pixwidthtarget + l*2 + 2 + o] = (0 if c == '-' else 1)
+                    
+                    if i * cols + j < 96:
+                        for k in range(0,self.pixheightsrc1):
+                            for l in range(0,self.pixwidthsrc1):
+                                c = charlines[(i * cols + j) * self.pixheightsrc1 + k][l]
+                                for n in range(0,2):
+                                    for o in range(0,2):
+                                        charmap[i * self.pixheighttarget + k*2 + 2 + n, 
+                                                j * self.pixwidthtarget + l*2 + 2 + o] = (0 if c == '-' else 1)
+                    else:
+                        for k in range(0,self.pixheightsrc2):
+                            for l in range(0,self.pixwidthsrc2):
+                                idx = (i * cols + j) - 96
+                                c = charlines[(96 * self.pixheightsrc1) + idx * self.pixheightsrc2 + k][l]
+                                for n in range(0,2):
+                                    for o in range(0,2):
+                                        charmap[i * self.pixheighttarget + k*2 + n, 
+                                                j * self.pixwidthtarget + l*2 + o] = (0 if c == '-' else 1)
         
         return charmap
                                     
-    def add_character(self, c, pos, color, double = False):
+    def add_character(self, c, pos, color, bgcolor, double = False):
         """
         Add a single character
         """
@@ -100,8 +115,8 @@ class PSC:
                 c = self.charmap[cpos[0] * self.pixheighttarget + i, 
                                  cpos[1] * self.pixwidthtarget + j]
                 
-                col = tuple([c * color[i] for i in range(3)])
-                
+                col = tuple([c * color[i] + (1-c) * bgcolor[i] for i in range(3)])
+
                 if double:
                     for k in range(0,2):
                         pixels[pos[1] * self.pixwidthtarget + j, 
@@ -137,6 +152,41 @@ class PSC:
                 double = True
                 self.add_character(ord(' '), (line, i), color)
     
+    def write_vmem(self, filename):
+
+        with open(filename, 'rb') as f:
+            data = bytearray(f.read())
+            
+            for i in range(0,24):
+                
+                bgcolor = BLACK
+                color = WHITE
+                double = False
+                graphic = False
+                
+                for j in range(0,40):
+                    s = data[i * 40 + j]
+                                        
+                    if s > 0x20 or s == 0x1D:
+                        if s == 0x1D:
+                            s = data[i * 40 + j - 1]
+                        if s <= ord('?'):
+                            s += 16 * 6
+                        if  s >= ord('-') and s <= 127:
+                            s += 16 * 4
+                        self.add_character(int(s), (i, j), color, bgcolor, double)                        
+                    elif s < 0x08:
+                        color = COLS[int(s)]
+                        self.add_character(ord(' '), (i, j), bgcolor, color)
+                    elif s >= 0x10 and s < 0x18:
+                        color = COLS[int(s) - 0x10]
+                        graphic = True
+                        self.add_character(ord(' '), (i, j), bgcolor, color)
+                    elif s == SC_DOUBLE:
+                        double = True
+                        self.add_character(ord(' '), (i, j), bgcolor, color)
+                    
+    
     def show(self):
         """
         Show the current canvas
@@ -163,7 +213,14 @@ class PSC:
                                   (cs[1] - self.canvas.size[1])//2))
         im.rectangle((20, 20, cs[0] - 20, cs[1] - 20), outline='#706b52')
         return frame
-        
+    
+    def plot_charmap(self):
+        plt.figure(dpi=300)
+        plt.imshow(self.charmap, cmap='gray_r')
+        plt.xticks(np.arange(0, 16*12, 12) - 0.5, [])
+        plt.yticks(np.arange(0, 10*20, 20) - 0.5, [])
+        plt.grid(linestyle='--', color='black', alpha=0.5)
+    
     def save(self, filename):
         """
         Store the canvas on disk

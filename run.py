@@ -7,56 +7,188 @@ def main():
     #ls()
     #cd6()
     #lscas()
-    runfraxxon_checksum()
+    #runfraxxon()
+    #runfraxxon_checksum()
+    #hexdump_fraxxon()
+    #invalid_command()
+    #flasher_boot()
+    #flasher_done()
+    galgje_intro()
+
+def galgje_intro():
+    gen = psc.PSC()
+    gen.write_vmem('vmemdumps/galgje.vram')
+    gen.show()
+
+def invalid_command():
+    lines = []
+    
+    lines = []
+    lines.append(["SD Card initialized"])
+    lines.append(["Reading partition 1"])
+    lines.append(["Bytes per sector:", psc.SC_GREEN, "512"])
+    lines.append(["Partition size:", psc.SC_GREEN, "3832 MiB"])
+    lines.append(["Volume name:", psc.SC_GREEN, "P2000T"])
+    lines.append(["Partition 1 mounted"])
+    lines.append(["System ready"])
+    lines.append([psc.SC_CYAN, ">", psc.SC_WHITE, "blaat"])
+    lines.append([psc.SC_RED, "ERROR", psc.SC_WHITE, "Invalid command"])
+    lines.append([psc.SC_CYAN, ">", psc.SC_WHITE, 127])
+    
+    lines = reformat_lines(lines, 3)
+    
+    build_screenshot_launcher(lines, "invalid_command.png")
+
+def flasher_boot():
+    lines = []
+    lines.append(["System booted."])
+    lines.append(["Press any key to search SD card for"])
+    lines.append(["flashable file."])
+    
+    lines = reformat_lines(lines, 3)
+    
+    build_screenshot_flasher(lines, "flasher_boot.png")
+    
+def flasher_done():
+    lines = []
+    lines.append(["SD Card initialized"])
+    lines.append(["Reading partition 1"])
+    lines.append(["Bytes per sector:", psc.SC_GREEN, "512"])
+    lines.append(["Partition size:", psc.SC_GREEN, "3832 MiB"])
+    lines.append(["Volume name:", psc.SC_GREEN, "P2000T"])
+    lines.append(["Partition 1 mounted"])
+    lines.append([])
+    lines.append(["LAUNCHER.BIN found: ", psc.SC_GREEN, "11520 Bytes"])
+    lines.append(["Connection to ROM chip established."])
+    lines.append(["Device signature", psc.SC_CYAN, "B5BF", psc.SC_WHITE, ": SST39SF010"])
+    lines.append(["Wiping 0x0000-0x3FFF"])
+    lines.append(["Copying LAUNCHER.BIN, please wait..."])
+    lines.append(["Done parsing 23 / 23 sectors"])
+    lines.append([])
+    lines.append(["Calculating CRC16, please wait..."])
+    lines.append(["Checksum succesfully validated."])
+    lines.append([])
+    lines.append([psc.SC_GREEN, "FLASHING COMPLETED!"])
+    
+    lines = reformat_lines(lines, 3)
+    
+    build_screenshot_flasher(lines, "flasher_done.png")
+
+def hexdump_fraxxon():
+    lines = []
+    ln = 3
+    lines.append((ln, ["Filename: FRAXXON. CAS"]))
+    ln += 1
+    for i in range(6):
+        lines.append((ln, [psc.SC_YELLOW,
+                               "%04X" % (i * 8),
+                               psc.SC_WHITE,
+                               "00 00 00 00 00 00 00 00",
+                               psc.SC_CYAN,
+                               "........"]))
+        ln += 1
+    
+    lines.append((ln, [psc.SC_YELLOW,
+                           "0030",
+                           psc.SC_WHITE,
+                           "47 65 B9 5F B9 5F 46 72",
+                           psc.SC_CYAN,
+                           "Ge.",0x5F,".",0x5F,"Fr"]))
+    ln += 1
+    
+    lines.append((ln, [psc.SC_YELLOW,
+                           "0038",
+                           psc.SC_WHITE,
+                           "61 78 78 6F 6E 00 42 41",
+                           psc.SC_CYAN,
+                           "axxon.BA"]))
+    
+    ln += 1
+    
+    lines.append((ln, [psc.SC_YELLOW,
+                           "0040",
+                           psc.SC_WHITE,
+                           "53 42 4E B9 5F 00 00 00",
+                           psc.SC_CYAN,
+                           "SBN.", 0x5F, "..."]))
+    
+    ln += 1
+    
+    lines.append((ln, [psc.SC_YELLOW,
+                           "0048",
+                           psc.SC_WHITE,
+                           "00 00 00 00 00 00 00 18",
+                           psc.SC_CYAN,
+                           "........"]))
+    
+    ln += 1
+    
+    for i in range(6):
+        lines.append((ln, [psc.SC_YELLOW,
+                               "%04X" % ((i+10) * 8),
+                               psc.SC_WHITE,
+                               "00 00 00 00 00 00 00 00",
+                               psc.SC_CYAN,
+                               "........"]))
+        ln += 1
+    
+    lines.append((ln, [psc.SC_CYAN, ">", psc.SC_WHITE, 127]))
+    build_screenshot_launcher(lines, "hexdump-fraxxon.png")
 
 def runfraxxon_checksum():
     lines = []
-    lines.append((2, ["Reading partition 1"]))
-    lines.append((3, ["Bytes per sector:", psc.SC_GREEN, "512"]))
-    lines.append((4, ["Partition size:", psc.SC_GREEN, "3832 MiB"]))
-    lines.append((5, ["Volume name:", psc.SC_GREEN, "P2000T"]))
-    lines.append((6, ["Partition 1 mounted"]))
-    lines.append((7, ["System ready"]))
-    lines.append((8, [psc.SC_CYAN, ">", psc.SC_WHITE, "cd 6"]))
-    lines.append((9, [psc.SC_CYAN, ">", psc.SC_WHITE, "run 45"]))
-    lines.append((10, ["Filename: FRAXXON.CAS"]))
-    lines.append((11, ["Filesize: 30720 bytes"]))
-    lines.append((12, ["Done loading 60 / 60 sectors"]))
-    lines.append((13, ["Deploy addr: ", psc.SC_CYAN, "0x6547"]))
-    lines.append((14, ["Program length: ", psc.SC_CYAN, "0x5FB9"]))
-    lines.append((15, ["Top RAM: ", psc.SC_CYAN, "0xC500"]))
-    lines.append((16, ["Press c to calculate checksum or any"]))
-    lines.append((17, ["other key to launch program."]))
-    lines.append((18, ["CRC16 checksum: ", psc.SC_CYAN, "0x0C3F"]))
-    lines.append((19, ["Press any key to start program"]))
     
-    build_screenshot(lines, "run-fraxxon-checksum.png")
+    lines.append(["Reading partition 1"])
+    lines.append(["Bytes per sector:", psc.SC_GREEN, "512"])
+    lines.append(["Partition size:", psc.SC_GREEN, "3832 MiB"])
+    lines.append(["Volume name:", psc.SC_GREEN, "P2000T"])
+    lines.append(["Partition 1 mounted"])
+    lines.append(["System ready"])
+    lines.append([psc.SC_CYAN, ">", psc.SC_WHITE, "cd 6"])
+    lines.append([psc.SC_CYAN, ">", psc.SC_WHITE, "run 45"])
+    lines.append(["Filename: FRAXXON.CAS"])
+    lines.append(["Filesize: 30720 bytes"])
+    lines.append(["Done loading 60 / 60 sectors"])
+    lines.append(["Deploy addr: ", psc.SC_CYAN, "0x6547"])
+    lines.append(["Program length: ", psc.SC_CYAN, "0x5FB9"])
+    lines.append(["Top RAM: ", psc.SC_CYAN, "0xC500"])
+    lines.append(["Press c to calculate checksum or any"])
+    lines.append(["other key to launch program."])
+    lines.append(["CRC16 checksum: ", psc.SC_CYAN, "0x0C3F"])
+    lines.append(["Press any key to start program"])
+    
+    lines = reformat_lines(lines, 3)
+    
+    build_screenshot_launcher(lines, "run-fraxxon-checksum.png")
 
 def runfraxxon():
     lines = []
-    lines.append((2, ["SD Card initialized"]))
-    lines.append((3, ["Reading partition 1"]))
-    lines.append((4, ["Bytes per sector:", psc.SC_GREEN, "512"]))
-    lines.append((5, ["Partition size:", psc.SC_GREEN, "3832 MiB"]))
-    lines.append((6, ["Volume name:", psc.SC_GREEN, "P2000T"]))
-    lines.append((7, ["Partition 1 mounted"]))
-    lines.append((8, ["System ready"]))
-    lines.append((9, [psc.SC_CYAN, ">", psc.SC_WHITE, "cd 6"]))
-    lines.append((10, [psc.SC_CYAN, ">", psc.SC_WHITE, "run 45"]))
-    lines.append((11, ["Filename: FRAXXON.CAS"]))
-    lines.append((12, ["Filesize: 30720 bytes"]))
-    lines.append((13, ["Done loading 60 / 60 sectors"]))
-    lines.append((14, ["Deploy addr: ", psc.SC_CYAN, "0x6547"]))
-    lines.append((15, ["Program length: ", psc.SC_CYAN, "0x5FB9"]))
-    lines.append((16, ["Top RAM: ", psc.SC_CYAN, "0xC500"]))
-    lines.append((17, ["Press c to calculate checksum or any"]))
-    lines.append((18, ["other key to launch program."]))
     
-    build_screenshot(lines, "run-fraxxon.png")
+    lines.append(["SD Card initialized"])
+    lines.append(["Reading partition 1"])
+    lines.append(["Bytes per sector:", psc.SC_GREEN, "512"])
+    lines.append(["Partition size:", psc.SC_GREEN, "3832 MiB"])
+    lines.append(["Volume name:", psc.SC_GREEN, "P2000T"])
+    lines.append(["Partition 1 mounted"])
+    lines.append(["System ready"])
+    lines.append([psc.SC_CYAN, ">", psc.SC_WHITE, "cd 6"])
+    lines.append([psc.SC_CYAN, ">", psc.SC_WHITE, "run 45"])
+    lines.append(["Filename: FRAXXON.CAS"])
+    lines.append(["Filesize: 30720 bytes"])
+    lines.append(["Done loading 60 / 60 sectors"])
+    lines.append(["Deploy addr: ", psc.SC_CYAN, "0x6547"])
+    lines.append(["Program length: ", psc.SC_CYAN, "0x5FB9"])
+    lines.append(["Top RAM: ", psc.SC_CYAN, "0xC500"])
+    lines.append(["Press c to calculate checksum or any"])
+    lines.append(["other key to launch program."])
+    
+    lines = reformat_lines(lines, 3)
+    
+    build_screenshot_launcher(lines, "run-fraxxon.png")
 
 def lscas():
     lines = []
-    lines.append((2, [psc.SC_CYAN, ">", psc.SC_WHITE, "lscas"]))
+    lines.append((3, [psc.SC_CYAN, ">", psc.SC_WHITE, "lscas"]))
     
     files = [
      (".", 0, 0x135),
@@ -77,7 +209,7 @@ def lscas():
      ("boter kaas", 2, 1829),
     ]
     
-    linenr = 3
+    linenr = 4
     for i,f in enumerate(files):
         
         base = f[0]
@@ -125,67 +257,10 @@ def lscas():
     
     lines.append((linenr, ["-- Press key to continue, q to quit --"]))
     
-    build_screenshot(lines, "lscas.png")
+    build_screenshot_launcher(lines, "lscas.png")
 
 def cd6():
     lines = []
-    lines.append((2, ["Partition 1 mounted"]))
-    lines.append((3, ["System ready"]))
-    lines.append((4, [psc.SC_CYAN, ">", psc.SC_WHITE, "ls"]))
-    
-    files = [
-     ("README.MD", 320, 0x6),
-     ("ADMINI~1.DIR", 0, 0x7),
-     ("COMMUN~1.DIR", 0, 0x45),
-     ("DEMO.DIR", 0, 0x71),
-     ("EDUCAT~1.DIR", 0, 0xAC),
-     ("GAMES.DIR", 0, 0x135),
-     ("NEWS.DIR", 0, 0x310),
-     ("PRINTER.DIR", 0, 0x315),
-     ("PROGRA~1.DIR", 0, 0x329),
-     ("UTILIT~1.DIR", 0, 0x34F),
-     ("LAUNCHER.BIN", 11520, 0x3D6),
-     ("PROGRAMS.DIR", 0, 0x3D9),
-    ]
-    
-    linenr = 5
-    for i,f in enumerate(files):
-        pieces = f[0].split(".")
-        
-        base = pieces[0]
-        if len(base) < 8:
-            for i in range(8 - len(base)):
-                base += ' '
-        ext = pieces[1]
-        if ext != "DIR":
-            base += '.'
-        else:
-            base += ' '
-            
-        if len(ext) < 3:
-            for i in range(3 - len(ext)):
-                ext += ' '
-        
-        lines.append((linenr, [psc.SC_YELLOW if ext == "DIR" else psc.SC_GREEN, 
-                               "%3i" % (i+1), psc.SC_WHITE, 
-                               "%s%s" % (base, ext), 
-                               psc.SC_YELLOW, 
-                               ("%6i" % f[1]) if f[1] != 0 else "      ",
-                               psc.SC_CYAN, 
-                               "%08X" % f[2]]))
-        linenr += 1
-    
-    lines.append((linenr, ["    12 File(s)      11840 Bytes"]))
-    linenr += 1
-    lines.append((linenr, [psc.SC_CYAN, ">", psc.SC_WHITE, "cd 6"]))
-    linenr += 1
-    lines.append((linenr, [psc.SC_CYAN, ">", psc.SC_WHITE, 127]))
-    
-    build_screenshot(lines, "cd6.png")
-
-def ls():
-    lines = []
-    lines.append((2, ["Volume name:", psc.SC_GREEN, "P2000T"]))
     lines.append((3, ["Partition 1 mounted"]))
     lines.append((4, ["System ready"]))
     lines.append((5, [psc.SC_CYAN, ">", psc.SC_WHITE, "ls"]))
@@ -234,24 +309,81 @@ def ls():
     
     lines.append((linenr, ["    12 File(s)      11840 Bytes"]))
     linenr += 1
+    lines.append((linenr, [psc.SC_CYAN, ">", psc.SC_WHITE, "cd 6"]))
+    linenr += 1
     lines.append((linenr, [psc.SC_CYAN, ">", psc.SC_WHITE, 127]))
     
-    build_screenshot(lines, "ls.png")
+    build_screenshot_launcher(lines, "cd6.png")
+
+def ls():
+    lines = []
+    lines.append((3, ["Volume name:", psc.SC_GREEN, "P2000T"]))
+    lines.append((4, ["Partition 1 mounted"]))
+    lines.append((5, ["System ready"]))
+    lines.append((6, [psc.SC_CYAN, ">", psc.SC_WHITE, "ls"]))
+    
+    files = [
+     ("README.MD", 320, 0x6),
+     ("ADMINI~1.DIR", 0, 0x7),
+     ("COMMUN~1.DIR", 0, 0x45),
+     ("DEMO.DIR", 0, 0x71),
+     ("EDUCAT~1.DIR", 0, 0xAC),
+     ("GAMES.DIR", 0, 0x135),
+     ("NEWS.DIR", 0, 0x310),
+     ("PRINTER.DIR", 0, 0x315),
+     ("PROGRA~1.DIR", 0, 0x329),
+     ("UTILIT~1.DIR", 0, 0x34F),
+     ("LAUNCHER.BIN", 11520, 0x3D6),
+     ("PROGRAMS.DIR", 0, 0x3D9),
+    ]
+    
+    linenr = 7
+    for i,f in enumerate(files):
+        pieces = f[0].split(".")
+        
+        base = pieces[0]
+        if len(base) < 8:
+            for i in range(8 - len(base)):
+                base += ' '
+        ext = pieces[1]
+        if ext != "DIR":
+            base += '.'
+        else:
+            base += ' '
+            
+        if len(ext) < 3:
+            for i in range(3 - len(ext)):
+                ext += ' '
+        
+        lines.append((linenr, [psc.SC_YELLOW if ext == "DIR" else psc.SC_GREEN, 
+                               "%3i" % (i+1), psc.SC_WHITE, 
+                               "%s%s" % (base, ext), 
+                               psc.SC_YELLOW, 
+                               ("%6i" % f[1]) if f[1] != 0 else "      ",
+                               psc.SC_CYAN, 
+                               "%08X" % f[2]]))
+        linenr += 1
+    
+    lines.append((linenr, ["    12 File(s)      11840 Bytes"]))
+    linenr += 1
+    lines.append((linenr, [psc.SC_CYAN, ">", psc.SC_WHITE, 127]))
+    
+    build_screenshot_launcher(lines, "ls.png")
 
 def boot():
     lines = []
-    lines.append((2, ["SD Card initialized"]))
-    lines.append((3, ["Reading partition 1"]))
-    lines.append((4, ["Bytes per sector:", psc.SC_GREEN, "512"]))
-    lines.append((5, ["Partition size:", psc.SC_GREEN, "3832 MiB"]))
-    lines.append((6, ["Volume name:", psc.SC_GREEN, "P2000T"]))
-    lines.append((7, ["Partition 1 mounted"]))
-    lines.append((8, ["System ready"]))
-    lines.append((9, [psc.SC_CYAN, ">", psc.SC_WHITE, 127]))
+    lines.append((3, ["SD Card initialized"]))
+    lines.append((4, ["Reading partition 1"]))
+    lines.append((5, ["Bytes per sector:", psc.SC_GREEN, "512"]))
+    lines.append((6, ["Partition size:", psc.SC_GREEN, "3832 MiB"]))
+    lines.append((7, ["Volume name:", psc.SC_GREEN, "P2000T"]))
+    lines.append((8, ["Partition 1 mounted"]))
+    lines.append((9, ["System ready"]))
+    lines.append((10, [psc.SC_CYAN, ">", psc.SC_WHITE, 127]))
     
-    build_screenshot(lines, "boot.png")
+    build_screenshot_launcher(lines, "boot.png")
 
-def build_screenshot(lines, filename):
+def build_screenshot_launcher(lines, filename):
     gen = psc.PSC()
     header(gen)
     for l in lines:
@@ -259,13 +391,37 @@ def build_screenshot(lines, filename):
         
     footer(gen)
     gen.save("img/" + filename)
+    
+def build_screenshot_flasher(lines, filename):
+    gen = psc.PSC()
+    header_flasher(gen)
+    for l in lines:
+        gen.write_line(l[0], l[1])
+        
+    footer_flasher(gen)
+    gen.save("img/" + filename)
 
 def header(gen):
-    gen.write_line(1, [psc.SC_CYAN, psc.SC_DOUBLE, "SDCARD READER              P2000T"])
+    gen.write_line(2, [psc.SC_CYAN, psc.SC_DOUBLE, "SDCARD READER              P2000T"])
 
 def footer(gen):
-   gen.write_line(23, "Version: 0.6.0. Memory model: 48kb.")
-   gen.write_line(24, "Compiled at: May 02 2024 / 14:02:26")
+   gen.write_line(22, "Version: 0.6.0. Memory model: 48kb.")
+   gen.write_line(23, "Compiled at: May 02 2024 / 14:02:26")
    
+def header_flasher(gen):
+    gen.write_line(2, [psc.SC_CYAN, psc.SC_DOUBLE, "SDCARD FLASHER"])
+
+def footer_flasher(gen):
+   gen.write_line(22, "Version: 0.6.0")
+   gen.write_line(23, "Compiled at: May 02 2024 / 14:02:26")
+
+def reformat_lines(lines, start):
+    newlines = []
+    
+    for i,line in enumerate(lines):
+        newlines.append((start + i, line))
+        
+    return newlines
+
 if __name__ == '__main__':
     main()
