@@ -74,11 +74,12 @@ class PSC:
                 if line.startswith('-') or line.startswith('+'):
                     charlines.append(line.strip())
 
+            # set number of rows and columns in the charmap
             rows = 10
             cols = 16
             
+            # build charmap
             charmap = np.zeros((rows * self.pixheighttarget, cols * self.pixwidthtarget), dtype=np.uint8)
-            
             for i in range(0,rows):
                 for j in range(0,cols):
                     
@@ -100,7 +101,25 @@ class PSC:
                                         charmap[i * self.pixheighttarget + k*2 + n, 
                                                 j * self.pixwidthtarget + l*2 + o] = (0 if c == '-' else 1)
         
-        return charmap
+        # apply filter
+        charmap_filtered = np.zeros_like(charmap)
+        # for i in range(0,6):
+        #     for j in range(0,cols):
+        #         p = (i * self.pixheighttarget, j * self.pixwidthtarget)
+        #         for k in range(1,19):
+        #             for l in range(1,11):
+        #                 pc = (p[0] + k, p[1] + l)
+        #                 p0 = (pc[0] - 1, pc[1] - 1)
+        #                 p1 = (pc[0] - 1, pc[1] + 1)
+        #                 p2 = (pc[0] + 1, pc[1] + 1)
+        #                 p3 = (pc[0] + 1, pc[1] - 1)
+                        
+        #                 if charmap[p0[0], p0[1]] > 0.5 and charmap[p2[0], p2[1]] > 0.5:
+        #                     charmap_filtered[pc[0], pc[1]] = 1
+        #                 if charmap[p1[0], p1[1]] > 0.5 and charmap[p3[0], p3[1]] > 0.5:
+        #                     charmap_filtered[pc[0], pc[1]] = 1
+        
+        return np.logical_or(charmap, charmap_filtered)
                                     
     def add_character(self, c, pos, color, bgcolor, double = False):
         """
@@ -124,82 +143,64 @@ class PSC:
                 else:
                     pixels[pos[1] * self.pixwidthtarget + j, 
                            pos[0] * self.pixheighttarget + i] = col
-
-    def write_line(self, line, lst):
-        """
-        Write a line to the screen
-        """
-        # construct byte array
-        b = bytearray()
-        
-        # set starting color
-        color = WHITE
-        double = False
-        
-        for l in lst:
-            if type(l) == str:
-                b += bytearray(l.encode('ascii'))
-            elif type(l) == int:
-                b += bytearray([l])
-        
-        for i,s in enumerate(b):
-            if s > 0x20:
-                self.add_character(int(s), (line, i), color, double)
-            elif s < 0x08:
-                color = COLS[int(s)]
-                self.add_character(ord(' '), (line, i), color)
-            elif s == SC_DOUBLE:
-                double = True
-                self.add_character(ord(' '), (line, i), color)
     
-    def write_vmem(self, filename):
-
+    def write_vmem_file(self, filename):
+        """
+        Load a VRAM file and build screen from it
+        """
         with open(filename, 'rb') as f:
             data = bytearray(f.read())
+            self.write_vmem(data)
             
-            for i in range(0,24):
-                
-                bgcolor = BLACK
-                color = WHITE
-                double = False
-                graphic = False
-                
-                for j in range(0,40):
-                    s = data[i * 40 + j]
-                                        
-                    if s > 0x20 or s == 0x1D:
-                        if s == 0x1D:
-                            s = data[i * 40 + j - 1]
+    def write_vmem(self, data):
+        """
+        Build a screen purely based on VRAM data
+        """
+        for i in range(0,24):
+            
+            bgcolor = BLACK
+            color = WHITE
+            double = False
+            graphic = False
+            
+            for j in range(0,40):
+                s = data[i * 40 + j]
+                                    
+                if s >= 0x20 and s < 0x80:
+                    if graphic:
                         if s <= ord('?'):
                             s += 16 * 6
                         if  s >= ord('-') and s <= 127:
                             s += 16 * 4
-                        self.add_character(int(s), (i, j), color, bgcolor, double)                        
-                    elif s < 0x08:
-                        color = COLS[int(s)]
-                        self.add_character(ord(' '), (i, j), bgcolor, color)
-                    elif s >= 0x10 and s < 0x18:
-                        color = COLS[int(s) - 0x10]
-                        graphic = True
-                        self.add_character(ord(' '), (i, j), bgcolor, color)
-                    elif s == SC_DOUBLE:
-                        double = True
-                        self.add_character(ord(' '), (i, j), bgcolor, color)
+                    self.add_character(int(s), (i, j), color, bgcolor, double)                        
+                elif s < 0x08:
+                    color = COLS[int(s)]
+                    self.add_character(ord(' '), (i, j), color, bgcolor)
+                elif s >= 0x10 and s < 0x18:
+                    color = COLS[int(s) - 0x10]
+                    graphic = True
+                    self.add_character(ord(' '), (i, j), color, bgcolor)
+                elif s == SC_DOUBLE:
+                    double = True
+                    self.add_character(ord(' '), (i, j), color, bgcolor)
+                elif s == 0x1C: # black background color
+                    bgcolor = BLACK
+                    self.add_character(ord(' '), (i, j), color, bgcolor)
+                elif s == 0x1D: # change background color
+                    bgcolor = COLS[data[i * 40 + j - 1] - 0x10]
+                    self.add_character(ord(' '), (i, j), color, bgcolor)
+                elif s == 0x1F: # release graphics
+                    graphic = False
+                    self.add_character(ord(' '), (i, j), color, bgcolor)
+                else:
+                    print('Uncaptured byte: %i' % s)
                     
-    
     def show(self):
         """
         Show the current canvas
         """
         self.canvas.show()
-        
-    def upscale_and_blur(self):
-        sf = 2
-        img = self.canvas.resize((self.imw * sf, self.imh * sf), PIL.Image.NEAREST)
-        #img = img.filter(PIL.ImageFilter.GaussianBlur(radius=5))
-        #img = img.resize((self.imw, self.imh), PIL.Image.BICUBIC)
-        img.show()
-        
+                
     def monitor_frame(self):
         """
         Place Canvas in a monitor frame
@@ -209,8 +210,9 @@ class PSC:
         im = PIL.ImageDraw.Draw(frame)
         im.rectangle((20, 20, cs[0] - 20, cs[1] - 20), fill='#000000')
         im.rectangle((0, 0, cs[0] - 1, cs[1] - 1), outline='#706b52')
-        frame.paste(self.canvas, ((cs[0] - self.canvas.size[0])//2,
-                                  (cs[1] - self.canvas.size[1])//2))
+        content = self.canvas.resize((int(self.imw * 1.33), self.imh), PIL.Image.NEAREST)
+        frame.paste(content, ((cs[0] - content.size[0])//2,
+                              (cs[1] - content.size[1])//2))
         im.rectangle((20, 20, cs[0] - 20, cs[1] - 20), outline='#706b52')
         return frame
     

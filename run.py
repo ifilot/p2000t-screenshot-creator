@@ -3,22 +3,31 @@
 import psc
 
 def main():
-    #boot()
-    #ls()
-    #cd6()
-    #lscas()
-    #runfraxxon()
-    #runfraxxon_checksum()
-    #hexdump_fraxxon()
-    #invalid_command()
-    #flasher_boot()
-    #flasher_done()
-    galgje_intro()
+    # boot()
+    # ls()
+    # cd6()
+    # lscas()
+    # runfraxxon()
+    # runfraxxon_checksum()
+    # hexdump_fraxxon()
+    # invalid_command()
+    # flasher_boot()
+    # flasher_done()
+    # galgje_intro()
+    # fraxxon_intro()
+    gen = psc.PSC()
+    gen.plot_charmap()
+    pass
 
 def galgje_intro():
     gen = psc.PSC()
-    gen.write_vmem('vmemdumps/galgje.vram')
-    gen.show()
+    gen.write_vmem_file('vmemdumps/galgje.vram')
+    gen.save("img/" + "galgje.png")
+    
+def fraxxon_intro():
+    gen = psc.PSC()
+    gen.write_vmem_file('vmemdumps/fraxxon.vram')
+    gen.save("img/" + "fraxxon.png")
 
 def invalid_command():
     lines = []
@@ -371,6 +380,9 @@ def ls():
     build_screenshot_launcher(lines, "ls.png")
 
 def boot():
+    """
+    Create screenshot for SD card boot
+    """
     lines = []
     lines.append((3, ["SD Card initialized"]))
     lines.append((4, ["Reading partition 1"]))
@@ -383,39 +395,83 @@ def boot():
     
     build_screenshot_launcher(lines, "boot.png")
 
+def lines_to_vram(lines):
+    """
+    Convert lines to VRAM
+    """
+    data = bytearray([0x00] * 24 * 40)
+    
+    for line in lines:
+        ctr = 0
+        for i in line[1]:
+            if type(i) == str:
+                for c in i:
+                    data[40 * line[0] + ctr] = ord(c)
+                    ctr += 1
+            else:
+                data[40 * line[0] + ctr] = i
+                ctr += 1
+    return data
+
 def build_screenshot_launcher(lines, filename):
+    """
+    Build a screenshot for a launcher screen
+    """
     gen = psc.PSC()
-    header(gen)
-    for l in lines:
-        gen.write_line(l[0], l[1])
-        
-    footer(gen)
+    lines = header(lines)
+    lines = footer(lines)
+    data = lines_to_vram(lines)
+    gen.write_vmem(data)
     gen.save("img/" + filename)
     
 def build_screenshot_flasher(lines, filename):
+    """
+    Build a screenshot for a flasher screen
+    """
     gen = psc.PSC()
-    header_flasher(gen)
-    for l in lines:
-        gen.write_line(l[0], l[1])
-        
-    footer_flasher(gen)
+    lines = header_flasher(lines)
+    lines = footer_flasher(lines)
+    data = lines_to_vram(lines)
+    gen.write_vmem(data)
     gen.save("img/" + filename)
 
-def header(gen):
-    gen.write_line(2, [psc.SC_CYAN, psc.SC_DOUBLE, "SDCARD READER              P2000T"])
+def header(lines):
+    """
+    Add the header for the SD card screens
+    """
+    lines.append((2, [psc.SC_CYAN, psc.SC_DOUBLE, "SDCARD READER              P2000T"]))
+    return lines
 
-def footer(gen):
-   gen.write_line(22, "Version: 0.6.0. Memory model: 48kb.")
-   gen.write_line(23, "Compiled at: May 02 2024 / 14:02:26")
+def footer(lines):
+    """
+    Add the footer for the SD card screens
+    """
+    lines.append((22, "Version: 0.6.0. Memory model: 48kb."))
+    lines.append((23, "Compiled at: May 02 2024 / 14:02:26"))
    
-def header_flasher(gen):
-    gen.write_line(2, [psc.SC_CYAN, psc.SC_DOUBLE, "SDCARD FLASHER"])
+    return lines
+   
+def header_flasher(lines):
+    """
+    Add the header for the flash screens
+    """
+    lines.append((2, [psc.SC_CYAN, psc.SC_DOUBLE, "SDCARD FLASHER"]))
+    
+    return lines
 
-def footer_flasher(gen):
-   gen.write_line(22, "Version: 0.6.0")
-   gen.write_line(23, "Compiled at: May 02 2024 / 14:02:26")
+def footer_flasher(lines):
+    """
+    Add the footer for the flash screens
+    """
+    lines.append((22, "Version: 0.6.0"))
+    lines.append((23, "Compiled at: May 02 2024 / 14:02:26"))
+   
+    return lines
 
 def reformat_lines(lines, start):
+    """
+    Reformat the lines such that all the lines are given a line number
+    """
     newlines = []
     
     for i,line in enumerate(lines):
